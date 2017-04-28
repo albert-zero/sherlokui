@@ -612,36 +612,37 @@ class TDoudiaXmlHandler extends DefaultHandler {
 			}
 			return;
 		}
-		aInfoModel.mClearRows = true;
 		
-		if (aModel != null) {
-			if (aModel.getRowCount() == 0) {
-				if (aModel.mColumnNames.size() != aElement.mColumnNames.size()) {
-					aModel.mElementName = aElement.mTagName;
-					aModel.mColumnNames = aElement.mColumnNames;
-					aModel.mIsInitial = true;
-				}
-				else {
-					if (aModel.mColumnNames.size() > 1) {  
-						i = aModel.mColumnNames.size() - 1;
-						if (aModel.mColumnNames.get(i).compareTo(aElement.mColumnNames.get(i)) != 0) {
-							aModel.mColumnNames = aElement.mColumnNames;
-							aModel.mElementName = aElement.mTagName;
-							aModel.mIsInitial = true;
+		synchronized (aInfoModel) {	
+			aInfoModel.mClearRows = true;
+			
+			if (aModel != null) {
+				if (aModel.getRowCount() == 0) {
+					if (aModel.mColumnNames.size() != aElement.mColumnNames.size()) {
+						aModel.mElementName = aElement.mTagName;
+						aModel.mColumnNames = aElement.mColumnNames;
+						aModel.mIsInitial = true;
+					}
+					else {
+						if (aModel.mColumnNames.size() > 1) {  
+							i = aModel.mColumnNames.size() - 1;
+							if (aModel.mColumnNames.get(i).compareTo(aElement.mColumnNames.get(i)) != 0) {
+								aModel.mColumnNames = aElement.mColumnNames;
+								aModel.mElementName = aElement.mTagName;
+								aModel.mIsInitial = true;
+							}
 						}
 					}
 				}
+				
+			    if (aElement.mTagName == aModel.mElementName &&
+				    aElement.mColumnEntry.size() == aModel.mColumnNames.size()) {
+				    aModel.addRow(aElement.mColumnEntry, aElement.mRowId, 0);
+			    }
 			}
-			
-			if (aElement.mTagName == aModel.mElementName &&
-				aElement.mColumnEntry.size() == aModel.mColumnNames.size()) {
-				aModel.addRow(aElement.mColumnEntry, aElement.mRowId, 0);
-			}
-		}
 		
-		if (mModelStack.size() > 0) {
 			if (aElement.mIsBlock) {
-				synchronized (aInfoModel) {
+    			if (mModelStack.size() > 0) {
 					aInx 	= mModelStack.size() - 1;
 					aModel 	= mModelStack.get(aInx);
 					mModelStack.setSize(aInx);
@@ -651,19 +652,17 @@ class TDoudiaXmlHandler extends DefaultHandler {
 					}
 					aModel.check();
 					aModel.fireTableDataChanged();
-					aInfoModel.notifyAll();
-				}			
-			}
-		}	
-		
-		if (aModel != null) {
-			if (aModel.mElementName.compareTo("Trace") == 0) {
-				aModel.setDataVector();
-			}			
-		}	
-		else if (aInx == 1) {
-			synchronized(aInfoModel) {
+				}
 				aInfoModel.notifyAll();
+		    }	
+		
+			if (aModel != null) {
+				if (aModel.mElementName.compareTo("Trace") == 0) {
+					aModel.setDataVector();
+				}			
+			}	
+			else if (aInx == 1) {
+			    //--aInfoModel.notifyAll();
 			}
 		}
 	}

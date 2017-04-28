@@ -66,10 +66,9 @@ public class TMethods extends JPanel implements TDoualaView {
 		    }
 			
 			protected void paintComponent(Graphics g) {
-				try {
-					super.paintComponent(g);
-				} catch (Exception e) {
-					/**/
+				TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+				synchronized( aInfoModel ) {
+				    super.paintComponent(g);
 				}
 			}
 		};
@@ -79,7 +78,10 @@ public class TMethods extends JPanel implements TDoualaView {
 		        return TDouala.getInstance().getRenderer();
 		    }		
 			protected void paintComponent(Graphics g) {
-				super.paintComponent(g);
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+			        super.paintComponent(g);
+				}
 			}
 		};
 		
@@ -106,27 +108,29 @@ public class TMethods extends JPanel implements TDoualaView {
 			int mSelected = 0;
 			
 			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting() || !mModel.mReady) {
-					return;
-				}
-				ListSelectionModel aLsModel = (ListSelectionModel)e.getSource();
-				int aRow  = aLsModel.getMinSelectionIndex();
-				mSelected = Math.max(0, aRow);
+				TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+				synchronized( aInfoModel ) {
+					if (e.getValueIsAdjusting() || !mModel.mReady) {
+						return;
+					}
+					ListSelectionModel aLsModel   = (ListSelectionModel)e.getSource();
+					int aRow  = aLsModel.getMinSelectionIndex();
+					mSelected = Math.max(0, aRow);
 				
-		        if (!aLsModel.isSelectionEmpty()) {
-		            TableModel aModel = mMasterTable.getModel();
-
-		            if (aModel instanceof TDoudiaTableModel) {
-		            	String aRowid = ((TDoudiaTableModel)aModel).getRowidAt(mSelected);
-		            	if (!aRowid.equals("") && !aRowid.equals("0x0")) {
-		            		mConnection.doCommand("lsm -M" + aRowid + " -p");			            		
-		            	}
-		            }
-		        }
-				if (mMasterTable.getRowCount() > mSelected) {
-					mMasterTable.setRowSelectionInterval(mSelected, mSelected);					
+			        if (!aLsModel.isSelectionEmpty()) {
+			            TableModel aModel = mMasterTable.getModel();
+	
+			            if (aModel instanceof TDoudiaTableModel) {
+			            	String aRowid = ((TDoudiaTableModel)aModel).getRowidAt(mSelected);
+			            	if (!aRowid.equals("") && !aRowid.equals("0x0")) {
+			            		mConnection.doCommand("lsm -M" + aRowid + " -p");			            		
+			            	}
+			            }
+			        }
+					if (mMasterTable.getRowCount() > mSelected) {
+						mMasterTable.setRowSelectionInterval(mSelected, mSelected);					
+					}
 				}
-
 			}			
 		});		
 		//------------------------------------------------------------------

@@ -275,6 +275,13 @@ public class TClasses extends JPanel implements TDoualaView {
 			public TableCellRenderer getCellRenderer(int aRow, int aColumn) {
 		        return TDouala.getInstance().getRenderer();
 		    }
+			
+			public void paint(Graphics g) {
+				TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+				synchronized( aInfoModel ) {
+				    super.paint(g);
+				}
+			}
 		};		
 	    mClassTable.setIntercellSpacing(new Dimension(15,2));
 		
@@ -298,21 +305,24 @@ public class TClasses extends JPanel implements TDoualaView {
 		//------------------------------------------------------------------
 		aRowSelModel.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e) {
-				if (e.getValueIsAdjusting()) {
-					return;
-				}
-				ListSelectionModel aLsModel = (ListSelectionModel)e.getSource();
+				TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+				synchronized( aInfoModel ) {
+					if (e.getValueIsAdjusting()) {
+						return;
+					}
+					ListSelectionModel aLsModel   = (ListSelectionModel)e.getSource();
 				
-		        if (!aLsModel.isSelectionEmpty() && mClassModel.mReady) {
-		        	int aRow = aLsModel.getMinSelectionIndex();
-		        	//int aCol = aLsModel.getMinSelectionIndex();
-		            TableModel aModel = mClassTable.getModel();
-		            
-		            if (aModel instanceof TDoudiaTableModel) {
-		            	String aRowid = (String)((TDoudiaTableModel)aModel).getRowidAt(aRow);
-		            	mDetail.setClass(aRowid);
-		            }
-		        }
+			        if (!aLsModel.isSelectionEmpty() && mClassModel.mReady) {
+			        	int aRow = aLsModel.getMinSelectionIndex();
+			        	//int aCol = aLsModel.getMinSelectionIndex();
+			            TableModel aModel = mClassTable.getModel();
+			            
+			            if (aModel instanceof TDoudiaTableModel) {
+			            	String aRowid = (String)((TDoudiaTableModel)aModel).getRowidAt(aRow);
+			            	mDetail.setClass(aRowid);
+			            }
+			        }
+				}
 			}			
 		});
 		
