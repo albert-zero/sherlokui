@@ -6,6 +6,8 @@
 package com.sap.douala;
 
 import java.awt.BorderLayout;
+import java.awt.Graphics;
+
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 
@@ -38,6 +40,12 @@ public class TException extends JPanel implements TDoualaView {
 			public TableCellRenderer getCellRenderer(int aRow, int aColumn) {				
 		        return TDouala.getInstance().getRenderer();
 		    }
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
     	};
     	mExceptModel = new TDoudiaTableModel();
 	    mConnection.setTableListener(mExceptTable, 	mExceptModel, "Exceptions");

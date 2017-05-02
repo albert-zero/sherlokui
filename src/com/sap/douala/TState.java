@@ -8,6 +8,7 @@ package com.sap.douala;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -91,7 +92,13 @@ public class TState extends JPanel implements TDoualaView {
 					return aRenderer;
 				}
 		        return TDouala.getInstance().getRenderer();
-		    }    		
+		    }    
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
 			// ------------------------------------------------------------------
 			// ------------------------------------------------------------------
 			public TableCellEditor getCellEditor(
@@ -240,6 +247,23 @@ public class TState extends JPanel implements TDoualaView {
 	// ------------------------------------------------------------------
 	void stopTrace() {
 		mConnection.doCommand("stop trace");
+		mConnection.doCommand("lss");
+	}
+	// ------------------------------------------------------------------
+	// ------------------------------------------------------------------
+	void startLogging(String aFile) {
+		if (aFile == null) {
+		    mConnection.doCommand("start log");
+		}
+		else {
+		    mConnection.doCommand("start log -f" + aFile);		
+		}
+		mConnection.doCommand("lss");
+	}
+	// ------------------------------------------------------------------
+	// ------------------------------------------------------------------
+	void stopLogging() {
+		mConnection.doCommand("stop log");
 		mConnection.doCommand("lss");
 	}
 

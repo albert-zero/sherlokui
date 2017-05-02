@@ -7,6 +7,7 @@ package com.sap.douala;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.util.Vector;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -61,6 +62,14 @@ public class TTraceCallstack extends JPanel implements TDoualaView {
 			public TableCellRenderer getCellRenderer(int aRow, int aColumn) {
 		        return TDouala.getInstance().getRenderer();
 		    }
+			
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
+
 		};
 		
 		mEventTable.setRowSelectionAllowed(true);

@@ -473,104 +473,108 @@ class TDoudiaXmlHandler extends DefaultHandler {
 		else {
 			synchronized (aInfoModel) {
 				aInfoModel.mConnected = true;
-				aInfoModel.notifyAll();
 			}
 		}
-		mElementStack.add(aElement);
-				
-		aElement.mTagName = aName;
-		aElement.mModel	  = null;
-		aElement.mRowId   = "0x0";
-		
-		for (i = 0; i < aAttributes.getLength(); i++) {			
-			if (aAttributes.getLocalName(i).compareTo("ID") == 0) {
-				aElement.mRowId = aAttributes.getValue(i);
+
+		synchronized( aInfoModel ) {
+			mElementStack.add(aElement);
+					
+			aElement.mTagName = aName;
+			aElement.mModel	  = null;
+			aElement.mRowId   = "0x0";
+			
+			for (i = 0; i < aAttributes.getLength(); i++) {			
+				if (aAttributes.getLocalName(i).compareTo("ID") == 0) {
+					aElement.mRowId = aAttributes.getValue(i);
+				}
+				else if (aAttributes.getLocalName(i).compareTo("Exception") == 0) {
+					aException = "Exception = " + aAttributes.getValue(i);
+					aInfoModel.addRow(new String[] {aException});
+				}
+				else {
+					aElement.mColumnEntry.add(aAttributes.getValue(i));
+					aElement.mColumnNames.add(aAttributes.getLocalName(i));
+				}
 			}
-			else if (aAttributes.getLocalName(i).compareTo("Exception") == 0) {
-				aException = "Exception = " + aAttributes.getValue(i);
-				aInfoModel.addRow(new String[] {aException});
+	
+			aElement.mKey 	 = (String)aAttributes.getValue("Type");
+			aElement.mDetail = (String)aAttributes.getValue("Detail");
+			
+			if (aElement.mDetail != null) {
+				aElement.mKey = aElement.mKey.concat(aElement.mDetail);
+			}
+	
+			if (mModelStack.size() > 0) {
+				aElement.mModel = mModelStack.get(mModelStack.size()-1);
 			}
 			else {
-				aElement.mColumnEntry.add(aAttributes.getValue(i));
-				aElement.mColumnNames.add(aAttributes.getLocalName(i));
+				aElement.mModel  = mConnection.getModel(aElement.mKey);
+				if (aElement.mModel != null)  {
+					aElement.mModel.mKey = aElement.mKey;
+				}
 			}
-		}
-
-		aElement.mKey 	 = (String)aAttributes.getValue("Type");
-		aElement.mDetail = (String)aAttributes.getValue("Detail");
-		
-		if (aElement.mDetail != null) {
-			aElement.mKey = aElement.mKey.concat(aElement.mDetail);
-		}
-
-		if (mModelStack.size() > 0) {
-			aElement.mModel = mModelStack.get(mModelStack.size()-1);
-		}
-		else {
-			aElement.mModel  = mConnection.getModel(aElement.mKey);
+	
 			if (aElement.mModel != null)  {
-				aElement.mModel.mKey = aElement.mKey;
+				if (aElement.mModel.mClearRows) {
+					aElement.mModel.mClearRows = false;
+					aElement.mModel.clearRows();
+				}
 			}
-		}
-
-		if (aElement.mModel != null)  {
-			if (aElement.mModel.mClearRows) {
-				aElement.mModel.mClearRows = false;
-				aElement.mModel.clearRows();
-			}
-		}
-		
-		// Traces, Lists and Growing are tags which starts a list view
-		// and have to be organized in a model stack 
-		if (aLocalName.equals("Traces") ||
-			aLocalName.equals("List")   ||
-			aLocalName.equals("Growing")) {
 			
-			if (aElement.mRowId.compareTo("0x0") != 0) {
-				aRowId = aElement.mRowId;
-			}
-			aModel = aElement.mModel;
-			if (aModel != null) {			
-				if (mModelStack.size() > 0) {
-					// Link the new model to the parent 
-					// The RowID is the entry point for the master table
-					// Detail views have to be organized below this RowID using a unique name
-					if (aElement.mDetail != null) {
-						aModelChild		= aModel.getChild(aRowId);
-						aModelChild		= aModelChild.getChild(aElement.mKey);
-						aElement.mModel = aModelChild;
-						aModel          = aModelChild;
+			// Traces, Lists and Growing are tags which starts a list view
+			// and have to be organized in a model stack 
+			if (aLocalName.equals("Traces") ||
+				aLocalName.equals("List")   ||
+				aLocalName.equals("Growing")) {
+				
+				if (aElement.mRowId.compareTo("0x0") != 0) {
+					aRowId = aElement.mRowId;
+				}
+				aModel = aElement.mModel;
+				if (aModel != null) {			
+					if (mModelStack.size() > 0) {
+						// Link the new model to the parent 
+						// The RowID is the entry point for the master table
+						// Detail views have to be organized below this RowID using a unique name
+						if (aElement.mDetail != null) {
+							aModelChild		= aModel.getChild(aRowId);
+							aModelChild		= aModelChild.getChild(aElement.mKey);
+							aElement.mModel = aModelChild;
+							aModel          = aModelChild;
+						}
+						else {
+							aModel			= aModel.getChild(aRowId);
+						}				
+						aModel.mKey = aElement.mKey;				
 					}
-					else {
-						aModel			= aModel.getChild(aRowId);
-					}				
-					aModel.mKey = aElement.mKey;				
+					
+					if (!aModel.mKeepRows) {
+						aModel.clearChildren();
+						aModel.clearRows();
+					}
+					
+					aElement.mIsBlock = true;
+					mModelStack.add(aModel);
 				}
-				
-				if (!aModel.mKeepRows) {
-					aModel.clearChildren();
-					aModel.clearRows();
-				}
-				
+			}
+			else if (aLocalName.equals("Messages")) {
+				aElement.mModel   = null;
 				aElement.mIsBlock = true;
-				mModelStack.add(aModel);
+				mModelStack.add(aInfoModel);
+				if (aInfoModel.mClearRows) {
+					aInfoModel.mClearRows = false;
+					aInfoModel.clearRows();
+				}
 			}
-		}
-		else if (aLocalName.equals("Messages")) {
-			aElement.mModel   = null;
-			aElement.mIsBlock = true;
-			mModelStack.add(aInfoModel);
-			if (aInfoModel.mClearRows) {
-				aInfoModel.mClearRows = false;
-				aInfoModel.clearRows();
+			else if (aLocalName.equals("Message")) {
+				aElement.mModel = aInfoModel;
+				if (aInfoModel.mClearRows) {
+					aInfoModel.mClearRows = false;
+					aInfoModel.clearRows();
+				}
 			}
-		}
-		else if (aLocalName.equals("Message")) {
-			aElement.mModel = aInfoModel;
-			if (aInfoModel.mClearRows) {
-				aInfoModel.mClearRows = false;
-				aInfoModel.clearRows();
-			}
+			
+			//aInfoModel.notifyAll();
 		}
 	}
 
@@ -641,8 +645,9 @@ class TDoudiaXmlHandler extends DefaultHandler {
 			    }
 			}
 		
-			if (aElement.mIsBlock) {
-    			if (mModelStack.size() > 0) {
+			if (aElement.mIsBlock || aInx == 1) {
+				mConnection.mWaitResponse = false;
+				if (mModelStack.size() > 0) {
 					aInx 	= mModelStack.size() - 1;
 					aModel 	= mModelStack.get(aInx);
 					mModelStack.setSize(aInx);
@@ -653,7 +658,10 @@ class TDoudiaXmlHandler extends DefaultHandler {
 					aModel.check();
 					aModel.fireTableDataChanged();
 				}
-				aInfoModel.notifyAll();
+				
+				if (!aElement.mKey.equals("UserCommand")) {
+				    aInfoModel.notifyAll();
+				}
 		    }	
 		
 			if (aModel != null) {
@@ -676,7 +684,7 @@ public class TConnection {
 
 	/** Static singleton instance*/
 	static private TConnection mInstance = null;
-	
+	public  boolean mWaitResponse  = false;
 	private Socket 			mSocket;
 	private OutputStream 	mOutput;
 	private String 			mUser;
@@ -865,6 +873,7 @@ public class TConnection {
 		try {
 			synchronized (aInfoModel) {
 				mOutput.write(aCmd.concat("\n").getBytes());
+				mWaitResponse = true;
 				aInfoModel.wait();
 			}
 		} catch (Exception e) {

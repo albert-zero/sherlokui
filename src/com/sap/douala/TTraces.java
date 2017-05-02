@@ -6,6 +6,7 @@
 package com.sap.douala;
 
 import java.awt.BorderLayout;
+import java.awt.Graphics;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
@@ -38,13 +39,29 @@ public class TTraces extends JPanel implements TDoualaView {
 	private TTraces() {
 		super(new BorderLayout());
 		
-		mTracePane 		= new JTabbedPane();
+		mTracePane 		= new JTabbedPane() {
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
+
+		};
 		mTraceTrigger	= new TTraceTrigger();
-		mTraceLeak		= new TTraceLeak();
+		
+		mTraceLeak		= new TTraceLeak() {
+			public void paint(Graphics g) {
+	            TDoudiaTableModel aInfoModel = TConnection.getInstance().getModel("Info");
+		        synchronized( aInfoModel ) {
+        		    super.paint(g);
+			    }
+			}
+		};
 		mThreadDump     = new TThreads();
 		
 		mTracePane.add("Trigger",    mTraceTrigger);
-		mTracePane.add("MemoryLeak", mTraceLeak);
+		mTracePane.add("Memory",     mTraceLeak);
 		mTracePane.add("Threads", 	 mThreadDump);
 		mTracePane.add("TimeLaps", 	 TTimeLaps.getInstance());
 		mTracePane.add("Exception",  TException.getInstance());
@@ -63,7 +80,6 @@ public class TTraces extends JPanel implements TDoualaView {
 					e1.printStackTrace();
 				}				
 			}
-			
 		});
 	}
 	// ------------------------------------------------------------------

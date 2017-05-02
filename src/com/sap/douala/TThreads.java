@@ -7,6 +7,7 @@ package com.sap.douala;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 
@@ -46,7 +47,14 @@ public class TThreads extends JPanel implements TDoualaView {
 		mMasterTable = new JTable() {
 			public TableCellRenderer getCellRenderer(int aRow, int aColumn) {
 		        return TDouala.getInstance().getRenderer();
-		    }			
+		    }	
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
+
 		};		
 		//-----------------------------------------------------------------
 		//-----------------------------------------------------------------

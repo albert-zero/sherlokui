@@ -107,6 +107,7 @@ public class TDouala extends JPanel {
 	JToggleButton       mMonitorButton;
 	JButton       		mRefreshButton;
 	JToggleButton       mTracersButton;
+	JToggleButton       mLoggersButton;
 	JButton       		mGarbageButton;
 	JTable		 		mStatusTable;	
 	JButton             mTrace;
@@ -146,7 +147,10 @@ public class TDouala extends JPanel {
 
         mTabbedPanel 		= new JTabbedPane() {
         	public void paint(Graphics g) {
-        		super.paint(g);
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
         	}
         };	
         
@@ -160,6 +164,7 @@ public class TDouala extends JPanel {
 		mConnectButton  	= new JToggleButton("Disconnected");
 		mMonitorButton		= new JToggleButton("Mointor");
 		mTracersButton		= new JToggleButton("Trace");
+		mLoggersButton		= new JToggleButton("Logging");
 		mGarbageButton		= new JButton("GC");
 		mRefreshButton  	= new JButton("Refresh");
 		mFileButton  		= new JButton("LogFile");
@@ -178,6 +183,7 @@ public class TDouala extends JPanel {
 		mButtonPanel.add(mConnectButton, aConstraints);		
 		mButtonPanel.add(mMonitorButton, aConstraints);
 		mButtonPanel.add(mTracersButton, aConstraints);
+		mButtonPanel.add(mLoggersButton, aConstraints);
 		mButtonPanel.add(mGarbageButton, aConstraints);
 		mButtonPanel.add(mRefreshButton, aConstraints);
 		mButtonPanel.add(mFileButton, aConstraints);
@@ -231,7 +237,7 @@ public class TDouala extends JPanel {
 				int returnVal = aChooser.showOpenDialog(TDouala.getInstance());
 			    if(returnVal == JFileChooser.APPROVE_OPTION) {
 			    	mLogFile = aChooser.getSelectedFile().getAbsolutePath();
-			    	mLogin.doLogin();
+			    	mState.startLogging(mLogFile);
 			    }
 			}			
 		});
@@ -299,6 +305,19 @@ public class TDouala extends JPanel {
 				}
 			}
 		});	
+		// ------------------------------------------------------------------
+		// Button pressed "Logger"
+		// ------------------------------------------------------------------
+		mTracersButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (((AbstractButton)e.getSource()).isSelected()) {
+					mState.startLogging(mLogFile);
+				}
+				else {
+					mState.stopLogging();
+				}
+			}
+		});	
     }
 
 	// ------------------------------------------------------------------
@@ -308,17 +327,22 @@ public class TDouala extends JPanel {
 		if (TConnection.getInstance().isConnected()) {
 			mMonitorButton.setEnabled(true);
 			mTracersButton.setEnabled(true);
+			mLoggersButton.setEnabled(true);
 			mGarbageButton.setEnabled(true);
 			mRefreshButton.setEnabled(true);
 			mConnectButton.setSelected(true);
+			mFileButton.setEnabled(true);
 			mConnectButton.setText("Connected");				
 		}
 		else {
 			mMonitorButton.setEnabled(false);
 			mTracersButton.setEnabled(false);
+			mLoggersButton.setEnabled(false);
 			mGarbageButton.setEnabled(false);
 			mRefreshButton.setEnabled(false);
 			mConnectButton.setSelected(false);
+			mFileButton.setEnabled(false);
+
 			mConnectButton.setText("Disconnected");				
 			
 		}

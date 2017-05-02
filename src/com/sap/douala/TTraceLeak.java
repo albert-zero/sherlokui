@@ -8,6 +8,7 @@ package com.sap.douala;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
@@ -54,16 +55,31 @@ public class TTraceLeak extends JPanel implements TDoualaView {
 		mDetailHistory 	= new TDoudiaTableModel();	
 		mDetailHeap 	= new TDoudiaTableModel();	
 
-		mLeakTable 	= new JTable() {
+		mLeakTable  	= new JTable() {
 			public TableCellRenderer getCellRenderer(int aRow, int aColumn) {
 		        return TDouala.getInstance().getRenderer();
-		    }			
+		    }
+			
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
+
 		};		
 		
 		mLeakHistoryTable = new JTable() {
 			public TableCellRenderer getCellRenderer(int aRow, int aColumn) {
 		        return TDouala.getInstance().getRenderer();
 		    }			
+        	public void paint(Graphics g) {
+		        TDoudiaTableModel  aInfoModel = TConnection.getInstance().getModel("Info");
+			    synchronized( aInfoModel ) {
+	        		super.paint(g);
+				}
+        	}
+
 		};
 
 		mLeakHeapDumpTable = new JTable() {
@@ -72,7 +88,7 @@ public class TTraceLeak extends JPanel implements TDoualaView {
 		    }			
 		};
 							
-		mConnection.setTableListener(mLeakTable, 			mLeakModel, 	"Growing");
+		mConnection.setTableListener(mLeakTable, 			mLeakModel, 	"Leak");
 		mConnection.setTableListener(mLeakHistoryTable, 	mDetailHistory,  null);
 		mConnection.setTableListener(mLeakHeapDumpTable, 	mDetailHeap,	 null);
 
